@@ -1,22 +1,49 @@
 <script>
-    let email = '';
-    let password = '';
+  import { goto } from '$app/navigation';
+  import axios from 'axios';
+	import { isAuthenticated } from '../../stores/store';
+ 
 
-    function login() {
-        // Login logic here
-        console.log('Login attempted:', email);
-    }
+  let email = '';
+  let password = '';
+  // @ts-ignore
+  /**
+	 * @type {null}
+	 */
+  let responseData = null;
+  // @ts-ignore
+  /**
+	 * @type {null}
+	 */
+  let errorData = null;
 
+  async function login() {
+      try {
+          const response = await axios.post('http://localhost:7000/login', {email: email, password: password }, {
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+          });
+          responseData = response.data;
+          localStorage.setItem('authToken', response.data.token); // Store the token in local storage
+          $isAuthenticated = true;
+          goto('/userProfile');
+          console.log('Login successful:', response.data);
+          // Navigate to a different page, if necessary
+          // goto('/some-page');
+      } catch (/** @type {any} */ error) {
+          errorData = error.response ? error.response.data : error.message;
+          console.error('Error logging in:', errorData);
+      }
+  }
 
-    import { goto } from '$app/navigation';
-  
-    function navigateToRegister() {
+  function navigateToRegister() {
       goto('/register');
-    }
-  </script>
-  
-  <style>
-    .login-container {
+  }
+</script>
+
+<style>
+  .login-container {
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -58,13 +85,24 @@
     .login-container .signup-button:hover {
       text-decoration: underline;
     }
-  </style>
-  
-  <div class="login-container">
-    <h1>Login</h1>
-    <input type="email" placeholder="Email" />
-    <input type="password" placeholder="Password" />
-    <button>Login</button>
-    <button class="signup-button" on:click={navigateToRegister}>Not a Member? Sign Up Now!</button>
+</style>
+
+<div class="login-container">
+<h1>Login</h1>
+<input type="email" placeholder="Email" bind:value="{email}" required />
+<input type="password" placeholder="Password" bind:value="{password}" required />
+<button on:click="{login}">Login</button>
+<button class="signup-button" on:click={navigateToRegister}>Not a Member? Sign Up Now!</button>
+
+{#if responseData}
+  <div class="response">
+    <pre>{JSON.stringify(responseData, null, 2)}</pre>
   </div>
-  
+{/if}
+
+{#if errorData}
+  <div class="error">
+    Error: {errorData}
+  </div>
+{/if}
+</div>

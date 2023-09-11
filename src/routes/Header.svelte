@@ -1,7 +1,18 @@
 <script>
 	import { page } from '$app/stores';
+	import { isAuthenticated }from '../stores/store.js';// Adjust path according to your project structure
+	import { goto } from '$app/navigation';
 	import logo from '$lib/images/svelte-logo.svg';
 	import github from '$lib/images/github.svg';
+
+	let showModal = false;
+
+	function handleLogout() {
+		localStorage.removeItem('authToken'); // Adjust with the key you used to store the token
+		$isAuthenticated = false; // Update the authentication state in the store
+		showModal = false;
+		goto('/');
+	}
 </script>
 
 <header>
@@ -19,12 +30,22 @@
 			<li aria-current={$page.url.pathname === '/' ? 'page' : undefined}>
 				<a href="/">Home</a>
 			</li>
-			<li aria-current={$page.url.pathname === '/login' ? 'page' : undefined}>
-				<a href="/login">Login</a>
-			</li>
-			<li aria-current={$page.url.pathname.startsWith('/register') ? 'page' : undefined}>
-				<a href="/register">Register</a>
-			</li>
+
+			{#if !$isAuthenticated}
+				<li aria-current={$page.url.pathname === '/login' ? 'page' : undefined}>
+					<a href="/login">Login</a>
+				</li>
+				<li aria-current={$page.url.pathname.startsWith('/register') ? 'page' : undefined}>
+					<a href="/register">Register</a>
+				</li>
+			{:else}
+				<li aria-current={$page.url.pathname.startsWith('/userProfile') ? 'page' : undefined}>
+					<a href="/userProfile">Profile</a>
+				</li>
+				<li>
+					<a href="#" on:click={() => (showModal = true)}>Logout</a>
+				</li>
+			{/if}
 		</ul>
 		<svg viewBox="0 0 2 3" aria-hidden="true">
 			<path d="M0,0 L0,3 C0.5,3 0.5,3 1,2 L2,0 Z" />
@@ -37,6 +58,16 @@
 		</a>
 	</div>
 </header>
+
+{#if showModal}
+<div class="modal">
+	<div class="modal-content">
+		<p>Are you sure you want to logout?</p>
+		<button on:click={handleLogout}>Sign me out!</button>
+		<button on:click={() => (showModal = false)}>Cancel</button>
+	</div>
+</div>
+{/if}
 
 <style>
 	header {
@@ -125,5 +156,27 @@
 
 	a:hover {
 		color: var(--color-theme-1);
+	}
+
+	.modal {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background: rgba(0, 0, 0, 0.5);
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.modal-content {
+		background: #fff;
+		padding: 2em;
+		border-radius: 8px;
+		display: flex;
+		flex-direction: column;
+		gap: 1em;
+		align-items: center;
 	}
 </style>
